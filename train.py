@@ -6,8 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 
 '''
-input_list = np.array(pickle.load(open('./keypoint_list.pkl','rb')))
-output_list = np.array(pickle.load(open('./label_list.pkl','rb')))
+input_list = np.array(pickle.load(open('./pkls/keypoint_list.pkl','rb')))
+output_list = np.array(pickle.load(open('./pkls/label_list.pkl','rb')))
 
 kf = KFold(n_splits=10, shuffle=True, random_state=1)
 
@@ -28,10 +28,10 @@ for train_idx, test_idx in kf.split(input_list):
 print(sum(acc_list)/len(acc_list))
 print(acc_list)
 '''
-X_train = np.array(pickle.load(open('./keypoint_list.pkl','rb')))
-y_train = np.array(pickle.load(open('./label_list.pkl','rb')))
-X_test = np.array(pickle.load(open('./test_keypoint_list.pkl','rb')))
-y_test = np.array(pickle.load(open('./test_label_list.pkl','rb')))
+X_train = np.array(pickle.load(open('./pkls/keypoint_list.pkl','rb')))
+y_train = np.array(pickle.load(open('./pkls/label_list.pkl','rb')))
+X_test = np.array(pickle.load(open('./pkls/test_keypoint_list.pkl','rb')))
+y_test = np.array(pickle.load(open('./pkls/test_label_list.pkl','rb')))
 
 scaler = StandardScaler()
 scaler.fit(X_train)
@@ -43,6 +43,6 @@ y_prediction = clf.predict(X_test)
 acc = accuracy_score(y_test, y_prediction)
 print(acc)
 
-pickle.dump(clf, open('./trained_model.pkl','wb'))
-pickle.dump(scaler, open('./trained_scaler.pkl','wb'))
+pickle.dump(clf, open('./pkls/trained_model.pkl','wb'))
+pickle.dump(scaler, open('./pkls/trained_scaler.pkl','wb'))
 

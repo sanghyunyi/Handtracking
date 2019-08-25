@@ -1,3 +1,5 @@
+# From Python
+# It requires OpenCV installed for Python
 import sys
 import cv2
 import os
@@ -7,7 +9,10 @@ import time
 import itertools, pickle
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
-import imagezmq
+
+clf = pickle.load(open('./pkls/trained_model.pkl','rb'))
+scaler = pickle.load(open('./pkls/trained_scaler.pkl','rb'))
+class_dic = {0:'pinching', 1:'clenching', 2:'poking', 3:'palming'}
 
 def keypt2input(hand_coordinate):
     hand_coordinate = list(itertools.chain.from_iterable(hand_coordinate))
@@ -57,6 +62,7 @@ def keypt2input(hand_coordinate):
 
     return normalized_hand_coordinate
 
+
 # Import Openpose (Windows/Ubuntu/OSX)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 try:
@@ -68,7 +74,7 @@ try:
         import pyopenpose as op
     else:
         # Change these variables to point to the correct folder (Release/x64 etc.)
-        sys.path.append('../../../python');
+        sys.path.append('../../python');
         # If you run `make install` (default path is `/usr/local/python` for Ubuntu), you can also access the OpenPose/python module from there. This will install OpenPose and the python library at your desired installation path. Ensure that this is in your python path in order to use it.
         # sys.path.append('/usr/local/python')
         from openpose import pyopenpose as op
@@ -79,58 +85,77 @@ except ImportError as e:
 # Custom Params (refer to include/openpose/flags.hpp for more parameters)
 def set_params():
     params = dict()
-    params["model_folder"] = "../../../../models/"
+    params["model_folder"] = "../../../models/"
+    #params["write_json"] = "./data/"
     params["hand"] = True
     params["hand_detector"] = 2
     params["body"] = 0
 
+    params["profile_speed"] = 10
+    #params["hand_scale_number"] = 6
+    #params["hand_scale_range"] = 0.4
     params["disable_multi_thread"] = True
     params["process_real_time"] = True
     params["output_resolution"] = "-1x-80"
-    #params["net_resolution"] = "-1x256"
+    params["net_resolution"] = "-1x144"
     params["model_pose"] = "BODY_25" #It's faster on GPU?
+    #params["model_pose"] = "COCO"
     params["number_people_max"] = 1
+    #params["alpha_pose"] = 0.6
+    #params["scale_gap"] = 0.3
+    #params["scale_number"] = 1
+    #params["render_threshold"] = 0.05
+    #params["logging_level"] = 3
+    #params["write_video"] = "./test.avi"
 
     #If GPU version is built, and multiple GPUs are available, set the ID here
-    params["num_gpu_start"] = 0
+    #params["num_gpu_start"] = 0
     #params["disable_blending"] = False
     # Ensure you point to the correct path where models are located
     return params
 
 
+# Construct it from system arguments
+# op.init_argv(args[1])
+# oppython = op.OpenposePython()
 
-clf = pickle.load(open('../trained_model.pkl','rb'))
-scaler = pickle.load(open('../trained_scaler.pkl','rb'))
-class_dic = {0:'pinching', 1:'clenching', 2:'poking', 3:'palming'}
-imageHub = imagezmq.ImageHub()
+def main():
+    params = set_params()
 
-params = set_params()
-opWrapper = op.WrapperPython()
-opWrapper.configure(params)
-opWrapper.start()
-handRectangles = [
-        [
-        op.Rectangle(0.,0.,0.,0.), # Left hand
-        op.Rectangle(0.,0.,128.,128.)  # Right hand
+    #Constructing OpenPose object allocates GPU memory
+    opWrapper = op.WrapperPython()
+    opWrapper.configure(params)
+    opWrapper.start()
+
+    #Opening OpenCV stream
+    stream = cv2.VideoCapture(1)
+    stream.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+    #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    #video_out = cv2.VideoWriter('output.avi', fourcc, 10, (int(stream.get(3)), int(stream.get(4))))
+
+    handRectangles = [
+            [
+            op.Rectangle(0.,0.,0.,0.), # Left hand
+            op.Rectangle(0.,0.,1280.,1280.)  # Right hand
+            ]
         ]
-    ]
+    n = 0
+    while True:
+        ret,img = stream.read()
 
-while True:
-    image_name, input_img = imageHub.recv_image()
+        # Display the stream
+        cv2.imshow('Human Pose Estimation',img)
 
-    datum = op.Datum()
-    datum.cvInputData = input_img
-    datum.handRectangles = handRectangles
-    opWrapper.emplaceAndPop([datum])
+        #key = cv2.waitKey(0)
+        key = cv2.waitKey(1)
 
-    righthandKeypoints = datum.handKeypoints[1][0]
-    X = [keypt2input(righthandKeypoints)]
-    X = scaler.transform(X)
-    prediction = class_dic[int(clf.predict(X))]
+        n += 1
+        if key==ord('q'):
+            break
 
-    print(prediction)
-    imageHub.send_reply(str.encode(prediction))
+    stream.release()
+    #video_out.release()
+    cv2.destroyAllWindows()
 
-    # Display the stream
-    cv2.imshow('Human Pose Estimation',datum.cvOutputData)
-    cv2.waitKey(1)
+if __name__ == '__main__':
+        main()

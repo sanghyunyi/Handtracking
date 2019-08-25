@@ -10,8 +10,8 @@ import itertools, pickle
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 
-clf = pickle.load(open('./trained_model.pkl','rb'))
-scaler = pickle.load(open('./trained_scaler.pkl','rb'))
+clf = pickle.load(open('./pkls/trained_model.pkl','rb'))
+scaler = pickle.load(open('./pkls/trained_scaler.pkl','rb'))
 class_dic = {0:'pinching', 1:'clenching', 2:'poking', 3:'palming'}
 
 def keypt2input(hand_coordinate):
@@ -97,7 +97,7 @@ def set_params():
     params["disable_multi_thread"] = True
     params["process_real_time"] = True
     params["output_resolution"] = "-1x-80"
-    params["net_resolution"] = "-1x144"
+    params["net_resolution"] = "-1x256"
     params["model_pose"] = "BODY_25" #It's faster on GPU?
     #params["model_pose"] = "COCO"
     params["number_people_max"] = 1
@@ -142,9 +142,33 @@ def main():
     n = 0
     while True:
         ret,img = stream.read()
+        #img = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2RGB) # Change rgb video to monochrome
+
+        #video_out.write(img)
+
+        datum = op.Datum()
+        datum.cvInputData = img
+        datum.handRectangles = handRectangles
+
+        opWrapper.emplaceAndPop([datum])
+
+        # Output keypoints and the image with the human skeleton blended on it
+        #keypoints, output_image = openpose.forward(img, True)
+
+        # Print the human pose keypoints, i.e., a [#people x #keypoints x 3]-dimensional numpy object with the keypoints of all the people on that image
+        lefthandKeypoints = datum.handKeypoints[0][0]
+        righthandKeypoints = datum.handKeypoints[1][0]
+        print(n)
+        print("Left hand keypoints: \n" + str(lefthandKeypoints))
+        print("Right hand keypoints: \n" + str(righthandKeypoints))
+
+        X = [keypt2input(righthandKeypoints)]
+        X = scaler.transform(X)
+        prediction = int(clf.predict(X))
+        print("Prediction: \n" + class_dic[prediction])
 
         # Display the stream
-        cv2.imshow('Human Pose Estimation',img)
+        cv2.imshow('Human Pose Estimation',datum.cvOutputData)
 
         #key = cv2.waitKey(0)
         key = cv2.waitKey(1)

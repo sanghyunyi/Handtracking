@@ -59,6 +59,6 @@ for file in files_list:
 
         input_list.append(normalized_hand_coordinate)
 
-pickle.dump(input_list, open('./test_keypoint_list.pkl', 'wb'))
-pickle.dump(output_list, open('./test_label_list.pkl', 'wb'))
+pickle.dump(input_list, open('./pkls/test_keypoint_list.pkl', 'wb'))
+pickle.dump(output_list, open('./pkls/test_label_list.pkl', 'wb'))
 

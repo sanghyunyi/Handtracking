@@ -1,5 +1,3 @@
-# From Python
-# It requires OpenCV installed for Python
 import sys
 import cv2
 import os
@@ -9,10 +7,7 @@ import time
 import itertools, pickle
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
-
-clf = pickle.load(open('./trained_model.pkl','rb'))
-scaler = pickle.load(open('./trained_scaler.pkl','rb'))
-class_dic = {0:'pinching', 1:'clenching', 2:'poking', 3:'palming'}
+import imagezmq
 
 def keypt2input(hand_coordinate):
     hand_coordinate = list(itertools.chain.from_iterable(hand_coordinate))
@@ -62,7 +57,6 @@ def keypt2input(hand_coordinate):
 
     return normalized_hand_coordinate
 
-
 # Import Openpose (Windows/Ubuntu/OSX)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 try:
@@ -86,100 +80,57 @@ except ImportError as e:
 def set_params():
     params = dict()
     params["model_folder"] = "../../../models/"
-    #params["write_json"] = "./data/"
     params["hand"] = True
     params["hand_detector"] = 2
     params["body"] = 0
 
-    params["profile_speed"] = 10
-    #params["hand_scale_number"] = 6
-    #params["hand_scale_range"] = 0.4
     params["disable_multi_thread"] = True
     params["process_real_time"] = True
     params["output_resolution"] = "-1x-80"
-    params["net_resolution"] = "-1x256"
+    #params["net_resolution"] = "-1x256"
     params["model_pose"] = "BODY_25" #It's faster on GPU?
-    #params["model_pose"] = "COCO"
     params["number_people_max"] = 1
-    #params["alpha_pose"] = 0.6
-    #params["scale_gap"] = 0.3
-    #params["scale_number"] = 1
-    #params["render_threshold"] = 0.05
-    #params["logging_level"] = 3
-    #params["write_video"] = "./test.avi"
 
     #If GPU version is built, and multiple GPUs are available, set the ID here
-    #params["num_gpu_start"] = 0
+    params["num_gpu_start"] = 0
     #params["disable_blending"] = False
     # Ensure you point to the correct path where models are located
     return params
 
 
-# Construct it from system arguments
-# op.init_argv(args[1])
-# oppython = op.OpenposePython()
 
-def main():
-    params = set_params()
+clf = pickle.load(open('./pkls/trained_model.pkl','rb'))
+scaler = pickle.load(open('./pkls/trained_scaler.pkl','rb'))
+class_dic = {0:'pinching', 1:'clenching', 2:'poking', 3:'palming'}
+imageHub = imagezmq.ImageHub()
 
-    #Constructing OpenPose object allocates GPU memory
-    opWrapper = op.WrapperPython()
-    opWrapper.configure(params)
-    opWrapper.start()
-
-    #Opening OpenCV stream
-    stream = cv2.VideoCapture(1)
-    stream.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-    #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    #video_out = cv2.VideoWriter('output.avi', fourcc, 10, (int(stream.get(3)), int(stream.get(4))))
-
-    handRectangles = [
-            [
-            op.Rectangle(0.,0.,0.,0.), # Left hand
-            op.Rectangle(0.,0.,1280.,1280.)  # Right hand
-            ]
+params = set_params()
+opWrapper = op.WrapperPython()
+opWrapper.configure(params)
+opWrapper.start()
+handRectangles = [
+        [
+        op.Rectangle(0.,0.,0.,0.), # Left hand
+        op.Rectangle(0.,0.,128.,128.)  # Right hand
         ]
-    n = 0
-    while True:
-        ret,img = stream.read()
-        #img = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2RGB) # Change rgb video to monochrome
+    ]
 
-        #video_out.write(img)
+while True:
+    image_name, input_img = imageHub.recv_image()
 
-        datum = op.Datum()
-        datum.cvInputData = img
-        datum.handRectangles = handRectangles
+    datum = op.Datum()
+    datum.cvInputData = input_img
+    datum.handRectangles = handRectangles
+    opWrapper.emplaceAndPop([datum])
 
-        opWrapper.emplaceAndPop([datum])
+    righthandKeypoints = datum.handKeypoints[1][0]
+    X = [keypt2input(righthandKeypoints)]
+    X = scaler.transform(X)
+    prediction = class_dic[int(clf.predict(X))]
 
-        # Output keypoints and the image with the human skeleton blended on it
-        #keypoints, output_image = openpose.forward(img, True)
+    print(prediction)
+    imageHub.send_reply(str.encode(prediction))
 
-        # Print the human pose keypoints, i.e., a [#people x #keypoints x 3]-dimensional numpy object with the keypoints of all the people on that image
-        lefthandKeypoints = datum.handKeypoints[0][0]
-        righthandKeypoints = datum.handKeypoints[1][0]
-        print(n)
-        print("Left hand keypoints: \n" + str(lefthandKeypoints))
-        print("Right hand keypoints: \n" + str(righthandKeypoints))
-
-        X = [keypt2input(righthandKeypoints)]
-        X = scaler.transform(X)
-        prediction = int(clf.predict(X))
-        print("Prediction: \n" + class_dic[prediction])
-
-        # Display the stream
-        cv2.imshow('Human Pose Estimation',datum.cvOutputData)
-
-        #key = cv2.waitKey(0)
-        key = cv2.waitKey(1)
-
-        n += 1
-        if key==ord('q'):
-            break
-
-    stream.release()
-    #video_out.release()
-    cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-        main()
+    # Display the stream
+    #cv2.imshow('Human Pose Estimation',datum.cvOutputData)
+    cv2.waitKey(1)
