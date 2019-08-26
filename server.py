@@ -83,6 +83,7 @@ def set_params():
     params["hand"] = True
     params["hand_detector"] = 2
     params["body"] = 0
+    params["write_json"] = "./data/"
 
     params["disable_multi_thread"] = True
     params["process_real_time"] = True
@@ -114,10 +115,11 @@ handRectangles = [
         op.Rectangle(0.,0.,128.,128.)  # Right hand
         ]
     ]
-
+n = 0
 while True:
     image_name, input_img = imageHub.recv_image()
-
+    print(n)
+    n += 1
     datum = op.Datum()
     datum.cvInputData = input_img
     datum.handRectangles = handRectangles
