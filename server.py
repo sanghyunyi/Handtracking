@@ -126,12 +126,14 @@ while True:
     opWrapper.emplaceAndPop([datum])
 
     righthandKeypoints = datum.handKeypoints[1][0]
+    output_img = datum.cvOutputData
     X = [keypt2input(righthandKeypoints)]
     X = scaler.transform(X)
     prediction = class_dic[int(clf.predict(X))]
 
     print(prediction)
     imageHub.send_reply(str.encode(prediction))
+    cv2.imshow('Human Pose Estimation', output_img)
 
     # Display the stream
     #cv2.imshow('Human Pose Estimation',datum.cvOutputData)

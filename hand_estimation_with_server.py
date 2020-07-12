@@ -6,7 +6,7 @@ import os
 import imagezmq
 import time
 
-url = 'tcp://52.42.171.144:5555'#/actionclass'
+url = 'tcp://34.217.138.15:5555'#/actionclass'
 
 sender = imagezmq.ImageSender(connect_to=url)
 
@@ -31,13 +31,14 @@ def main():
         img = rescale_frame(img, percent=10)
         #video_out.write(img)
         start = time.time()
-        reply = sender.send_image('HandPose', img)
+        prediction = sender.send_image('HandPose', img)
+
         print(time.time() - start)
 
-        print(reply.decode())
+        print(prediction.decode())
 
         # Display the stream
-        cv2.imshow('Human Pose Estimation',img)
+        #cv2.imshow('Human Pose Estimation', img)
 
         #key = cv2.waitKey(0)
         key = cv2.waitKey(1)
