@@ -6,7 +6,7 @@ import os
 import imagezmq
 import time
 
-url = 'tcp://34.217.138.15:5555'#/actionclass'
+url = 'tcp://54.188.75.251:5555'#/actionclass'
 
 sender = imagezmq.ImageSender(connect_to=url)
 

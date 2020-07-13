@@ -128,11 +128,10 @@ while True:
     righthandKeypoints = datum.handKeypoints[1][0]
     X = [keypt2input(righthandKeypoints)]
     X = scaler.transform(X)
-    prob = clf.predict_proba(X)[0]
-    print(prob)
-    prob = prob[:-1] # drop palming
-    reply = ",".join([str(p) for p in prob])
-    imageHub.send_reply(str.encode(reply))
+
+    prediction = class_dic[int(clf.predict(X))]
+    print(prediction)
+    imageHub.send_reply(str.encode(prediction))
 
     # Display the stream
     cv2.imshow('Human Pose Estimation',datum.cvOutputData)
