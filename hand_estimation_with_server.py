@@ -6,13 +6,14 @@ import os
 import imagezmq
 import time
 
-url = 'tcp://54.188.75.251:5555'#/actionclass'
+url = 'tcp://54.244.132.115:5555'#/actionclass'
 
 sender = imagezmq.ImageSender(connect_to=url)
 
 def rescale_frame(frame, percent=75):
     width = int(frame.shape[1] * percent/ 100)
     height = int(frame.shape[0] * percent/ 100)
+    print(width, height)
     dim = (width, height)
     return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
 
@@ -20,17 +21,30 @@ def main():
     #Opening OpenCV stream
     stream = cv2.VideoCapture(1)
     stream.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output.avi', fourcc, 3.0, (192, 108))
+
     #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     #video_out = cv2.VideoWriter('output.avi', fourcc, 10, (int(stream.get(3)), int(stream.get(4))))
 
     n = 0
     while True:
         ret, img = stream.read()
+
         #img = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2RGB) # Change rgb video to monochrome
 
         img = rescale_frame(img, percent=10)
+
         #video_out.write(img)
+        if ret == True:
+            frame = cv2.flip(img,0)
+            out.write(frame)
+        else :
+            break
+
         start = time.time()
+
         prediction = sender.send_image('HandPose', img)
 
         print(time.time() - start)
@@ -38,16 +52,17 @@ def main():
         print(prediction.decode())
 
         # Display the stream
-        #cv2.imshow('Human Pose Estimation', img)
+        cv2.imshow('Human Pose Estimation', img)
 
         #key = cv2.waitKey(0)
         key = cv2.waitKey(1)
 
         n += 1
-        if key==ord('q'):
+        if key & 0xFF ==ord('q'):
             break
 
     stream.release()
+    out.release()
     #video_out.release()
     cv2.destroyAllWindows()
 
