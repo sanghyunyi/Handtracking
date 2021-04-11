@@ -88,8 +88,9 @@ def set_params():
     params["disable_multi_thread"] = True
     params["process_real_time"] = True
     params["output_resolution"] = "-1x-80"
-    #params["net_resolution"] = "-1x256"
+    params["net_resolution"] = "-1x112"
     params["model_pose"] = "BODY_25" #It's faster on GPU?
+    params["render_pose"] = 1
     params["number_people_max"] = 1
 
     #If GPU version is built, and multiple GPUs are available, set the ID here
@@ -112,7 +113,7 @@ opWrapper.start()
 handRectangles = [
         [
         op.Rectangle(0.,0.,0.,0.), # Left hand
-        op.Rectangle(0.,0.,128.,128.)  # Right hand
+        op.Rectangle(42.,0.,108.,108.)  # Right hand
         ]
     ]
 n = 0
