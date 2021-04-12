@@ -7,6 +7,7 @@ import time
 import itertools, pickle
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn import svm
 import imagezmq
 
 def keypt2input(hand_coordinate):
