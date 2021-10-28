@@ -4,7 +4,6 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
-from sklearn import svm
 
 '''
 input_list = np.array(pickle.load(open('./pkls/keypoint_list.pkl','rb')))
@@ -38,7 +37,8 @@ scaler = StandardScaler()
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
-clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(256,128,32), random_state=1, early_stopping=True)
+
+clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64,32), random_state=1, early_stopping=True)
 #clf = svm.SVC(kernel='rbf', probability=True)
 clf.fit(X_train, y_train)
 y_prediction = clf.predict(X_test)

@@ -6,7 +6,7 @@ import os
 import imagezmq
 import time
 
-url = 'tcp://54.188.75.251:5555'#/actionclass'
+url = 'tcp://34.218.229.27:5555'#/actionclass'
 
 sender = imagezmq.ImageSender(connect_to=url)
 
@@ -18,7 +18,7 @@ def rescale_frame(frame, percent=75):
 
 def main():
     #Opening OpenCV stream
-    stream = cv2.VideoCapture(1)
+    stream = cv2.VideoCapture(0)
     stream.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     #video_out = cv2.VideoWriter('output.avi', fourcc, 10, (int(stream.get(3)), int(stream.get(4))))

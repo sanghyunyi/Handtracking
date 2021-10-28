@@ -15,35 +15,34 @@ def keypt2input(hand_coordinate):
 
     x_list = []
     y_list = []
-    z_list = []
+    c_list = []
 
     for i in range(21):
         x = hand_coordinate[3*i]
         y = hand_coordinate[3*i+1]
-        z = hand_coordinate[3*i+2]
+        c = hand_coordinate[3*i+2]
 
         if i == 0:
             x0 = x
             y0 = y
-            z0 = z
+
             x = x - x0
             y = y - y0
-            z = z - z0
+            c = c
 
         else:
             x = x - x0
             y = y - y0
-            z = z - z0
+            c = c
 
-        hand_coordinate_dic[i] = [x, y, z]
+        hand_coordinate_dic[i] = [x, y, c]
 
         x_list.append(x)
         y_list.append(y)
-        z_list.append(z)
+        c_list.append(c)
 
     x_len = max(x_list) - min(x_list)
     y_len = max(y_list) - min(y_list)
-    z_len = max(z_list) - min(z_list)
 
     normalized_hand_coordinate = []
 
@@ -51,9 +50,12 @@ def keypt2input(hand_coordinate):
         before_normalization = hand_coordinate_dic[i]
         norm_x = before_normalization[0]/x_len
         norm_y = before_normalization[1]/y_len
-        norm_z = before_normalization[2]/z_len
-        normalized_hand_coordinate += [norm_x, norm_y, norm_z]
-        normalized_hand_coordinate += [norm_x**2 + norm_y**2, norm_x**2 + norm_z**2, norm_y**2 + norm_z**2, norm_x**2 + norm_y**2 + norm_z**2]
+        norm_c = before_normalization[2]
+        if i == 0:
+            normalized_hand_coordinate += [norm_c]
+        else:
+            normalized_hand_coordinate += [norm_x, norm_y, norm_c]
+        normalized_hand_coordinate += [norm_x**2 + norm_y**2]
 
     return normalized_hand_coordinate
 
